@@ -21,9 +21,4 @@ It allows users to browse, search, and manage books, while admins can add, updat
 
 ---
 
-## ⚙️ Installation & Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/username/library.git
-   cd library
