@@ -1,0 +1,1 @@
+This is a Library app based on django.
