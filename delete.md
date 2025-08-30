@@ -1,6 +1,0 @@
-book = Book.objects.get(title="Nineteen Eighty-Four")
-book.delete()
-Book.objects.all()
-
-
-(1, {'library.Book': 1})
