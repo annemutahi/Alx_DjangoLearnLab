@@ -1,3 +1,4 @@
-Book.objects.all()
+book = Book.objects.get(title="1984")
+book.id, book.title, book.author, book.publication_year
 
-<QuerySet [<Book: 1984 by George Orwell (1949)>]>
+(1, '1984', 'George Orwell', 1949)
