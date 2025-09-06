@@ -5,10 +5,7 @@ from django.views.generic import DetailView
 # Create your views here.
 def BookListView(request):
     books = Book.objects.all()
-    output = []
-    for book in books:
-        output.append(f"{book.title} by {book.author.name}")
-    return render(request, "<br>".join(output))
+    return render(request, 'book_list.html', {'books': books})
 
 
 class LibrarydetailView(DetailView):
