@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -16,6 +16,13 @@ class Book(models.Model):
 
     def __str__(self):
         return self.title
+    
+    class Meta:
+        permissions = [
+            ("can_add_book", "Can add a new book"),
+            ("can_change_book", "Can change existing book"),
+            ("can_delete_book", "Can delete a book"),
+        ]
     
 class Library(models.Model):
     name = models.CharField(max_length=100)
@@ -48,8 +55,29 @@ class UserProfile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance)
+        profile = UserProfile.objects.create(user=instance)
+        assign_role_permissions(instance, profile.role)
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.userprofile.save()
+    assign_role_permissions(instance.user, instance.role)
+
+def assign_role_permissions(user, role):
+    user.user_permissions.clear()
+    if role == 'Admin':
+        perms = Permission.objects.filter(codename__in=[
+            "can_add_book", "can_change_book", "can_delete_book"
+        ])
+        user.user_permissions.add(*perms)
+
+    elif role == 'Librarian':
+        perms = Permission.objects.filter(codename__in=[
+            "can_add_book", "can_change_book"
+        ])
+        user.user_permissions.add(*perms)
+
+    elif role == 'Member':
+        pass
+
+    user.save()
