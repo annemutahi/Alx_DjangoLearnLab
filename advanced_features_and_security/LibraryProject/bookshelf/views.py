@@ -5,8 +5,9 @@ from django.views.generic.detail import DetailView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
-from .forms import BookForm
+from .forms import BookForm, ExampleForm
 from django.contrib.auth.decorators import permission_required
+
 
 # Create your views here.
 def list_books(request):
@@ -99,3 +100,14 @@ def delete_book(request, pk):
 def edit_book(request, book_id):
     # only Editors and Admins can get in here
     pass
+
+@permission_required('bookshelf.can_create', raise_exception=True)
+def create_book(request):
+    if request.method == 'POST':
+        form = ExampleForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('book_list')
+    else:
+        form = ExampleForm()
+    return render(request, 'bookshelf/create_book.html', {'form': form})
