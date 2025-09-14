@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'relationship_app',
+    'bookshelf',
 ]
 
 MIDDLEWARE = [
@@ -122,7 +122,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = 'relationship_app/templates/relationship_app/library_detail.html'
-LOGOUT_REDIRECT_URL = 'relationship_app/templates/relationship_app/login.html'
+LOGIN_REDIRECT_URL = 'bookshelf/templates/bookshelf/library_detail.html'
+LOGOUT_REDIRECT_URL = 'bookshelf/templates/bookshelf/login.html'
 
-AUTH_USER_MODEL = 'relationship_app.CustomUser'
+AUTH_USER_MODEL = 'bookshelf.CustomUser'
