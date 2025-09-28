@@ -34,10 +34,14 @@ class BookListView(generics.ListAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['title', 'author', 'publication_year']   # exact match
-    search_fields = ['title', 'author']  # partial match
-    ordering_fields = ['title', 'publication_year']  # allow ordering
+    filter_backends = [
+        filters.DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ['title', 'author', 'publication_year']
+    search_fields = ['title', 'author']
+    ordering_fields = ['title', 'publication_year']
 
 # Retrieve a single book by ID
 class BookDetailView(generics.RetrieveAPIView):
