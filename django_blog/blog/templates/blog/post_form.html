@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %} {# optional if using django-crispy-forms #}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>
+        {% if form.instance.pk %}
+            Edit Post
+        {% else %}
+            New Post
+        {% endif %}
+    </h2>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Render errors clearly -->
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <ul>
+                {% for field, errors in form.errors.items %}
+                    <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <!-- If using crispy forms -->
+        {# {{ form|crispy }} #}
+
+        <!-- Otherwise render fields manually -->
+        <div class="mb-3">
+            <label for="id_title" class="form-label">Title</label>
+            {{ form.title }}
+        </div>
+        
+        <div class="mb-3">
+            <label for="id_body" class="form-label">Content</label>
+            {{ form.body }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            {% if form.instance.pk %}Update{% else %}Create{% endif %} Post
+        </button>
+    </form>
+</div>
+{% endblock %}
