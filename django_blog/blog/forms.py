@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from .models import Post, Comment
+from taggit.forms import TagWidget
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -14,6 +15,9 @@ class PostForm(forms.ModelForm):
     class Meta:
         model = Post
         fields = ["title", "content"]   # author excluded for security
+        widgets = {
+            'tags': TagWidget(),  # allows typing multiple tags
+        }
 
     def clean_title(self):
         title = self.cleaned_data.get("title")
