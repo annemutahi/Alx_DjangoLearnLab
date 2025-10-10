@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, filters, status
+from rest_framework import viewsets, permissions, filters, status, generics
 from rest_framework.exceptions import PermissionDenied
 from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer
@@ -112,26 +112,34 @@ class UnlikePostView(APIView):
         return Response({'detail': 'Post unliked successfully.'}, status=status.HTTP_204_NO_CONTENT)
     
 @login_required
-def like_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    user = request.user
+def like_post(request, pk):
+    # Use DRF's get_object_or_404 for safety and clarity
+    post = generics.get_object_or_404(Post, pk=pk)
 
-    # Check if already liked
-    if Like.objects.filter(post=post, user=user).exists():
-        return JsonResponse({'error': 'You already liked this post.'}, status=400)
+    like, created = Like.objects.get_or_create(user=request.user, post=post)
 
-    Like.objects.create(post=post, user=user)
-    create_notification(recipient=post.author, actor=user, verb='liked your post', target=post)
-    return JsonResponse({'message': 'Post liked successfully.'})
+    if not created:
+        # The user already liked the post
+        return JsonResponse({'error': 'You have already liked this post.'}, status=400)
+
+    # Trigger a notification for the post author
+    create_notification(
+        recipient=post.author,
+        actor=request.user,
+        verb='liked your post',
+        target=post
+    )
+
+    return JsonResponse({'message': 'Post liked successfully.'}, status=200)
+
 
 @login_required
-def unlike_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    user = request.user
+def unlike_post(request, pk):
+    post = generics.get_object_or_404(Post, pk=pk)
 
-    like = Like.objects.filter(post=post, user=user).first()
-    if not like:
+    try:
+        like = Like.objects.get(user=request.user, post=post)
+        like.delete()
+        return JsonResponse({'message': 'Post unliked successfully.'}, status=200)
+    except Like.DoesNotExist:
         return JsonResponse({'error': 'You have not liked this post.'}, status=400)
-
-    like.delete()
-    return JsonResponse({'message': 'Post unliked successfully.'})
