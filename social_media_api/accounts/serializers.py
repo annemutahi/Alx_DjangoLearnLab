@@ -26,7 +26,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.save()
 
         # Create authentication token immediately
-        Token.objects.create(user=user)
+        token=Token.objects.create(user=user)
 
         return user
 
