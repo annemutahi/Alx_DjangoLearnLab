@@ -1,9 +1,17 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, status
 from rest_framework.exceptions import PermissionDenied
-from .models import Post, Comment
+from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+from notifications.models import Notification
+from notifications.utils import create_notification
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+User = get_user_model()
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
 
@@ -64,3 +72,66 @@ class FeedView(APIView):
         posts = Post.objects.filter(author__in=following_users).order_by('-created_at')
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
+    
+class LikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id)
+
+        # Prevent duplicate likes
+        if Like.objects.filter(user=request.user, post=post).exists():
+            return Response({'detail': 'You already liked this post.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create like
+        Like.objects.create(user=request.user, post=post)
+
+        # Create notification (avoid self-notifications)
+        if post.author != request.user:
+            Notification.objects.create(
+                recipient=post.author,
+                actor=request.user,
+                verb='liked your post',
+                target=post
+            )
+
+        return Response({'detail': 'Post liked successfully.'}, status=status.HTTP_201_CREATED)
+
+
+class UnlikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id)
+        like = Like.objects.filter(user=request.user, post=post).first()
+
+        if not like:
+            return Response({'detail': 'You have not liked this post.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        like.delete()
+        return Response({'detail': 'Post unliked successfully.'}, status=status.HTTP_204_NO_CONTENT)
+    
+@login_required
+def like_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    user = request.user
+
+    # Check if already liked
+    if Like.objects.filter(post=post, user=user).exists():
+        return JsonResponse({'error': 'You already liked this post.'}, status=400)
+
+    Like.objects.create(post=post, user=user)
+    create_notification(recipient=post.author, actor=user, verb='liked your post', target=post)
+    return JsonResponse({'message': 'Post liked successfully.'})
+
+@login_required
+def unlike_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    user = request.user
+
+    like = Like.objects.filter(post=post, user=user).first()
+    if not like:
+        return JsonResponse({'error': 'You have not liked this post.'}, status=400)
+
+    like.delete()
+    return JsonResponse({'message': 'Post unliked successfully.'})
