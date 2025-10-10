@@ -2,7 +2,8 @@ from rest_framework import viewsets, permissions, filters
 from rest_framework.exceptions import PermissionDenied
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
 
@@ -51,3 +52,15 @@ class CommentViewSet(viewsets.ModelViewSet):
         if instance.user != self.request.user:
             raise PermissionDenied("You can only delete your own comments.")
         instance.delete()
+
+class FeedView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        # Get users that the current user follows
+        followed_users = user.following.all()
+        # Filter posts by those authors
+        posts = Post.objects.filter(author__in=followed_users).order_by('-created_at')
+        serializer = PostSerializer(posts, many=True, context={'request': request})
+        return Response(serializer.data)
