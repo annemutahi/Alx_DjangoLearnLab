@@ -4,7 +4,7 @@ from rest_framework.authtoken.models import Token
 
 User = get_user_model()
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
@@ -20,3 +20,31 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         )
         Token.objects.create(user=user)
         return user
+    
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        username = data.get('username')
+        password = data.get('password')
+
+        if username and password:
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                raise serializers.ValidationError("Invalid username or password")
+
+            if not user.check_password(password):
+                raise serializers.ValidationError("Invalid username or password")
+        else:
+            raise serializers.ValidationError("Both username and password are required")
+
+        data['user'] = user
+        return data 
+    
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'bio', 'profile_picture']
